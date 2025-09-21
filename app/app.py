@@ -70,8 +70,8 @@ def extract_text_from_file_in_memory(file_storage, filename):
 
 # --- API Routes ---
 
-# --- ✅ FIX: Remove '/api' prefix from the Flask route ---
-@app.route('/analyze', methods=['POST'])
+# ✅ FIXED: Added '/api' prefix to match frontend expectations
+@app.route('/api/analyze', methods=['POST'])
 def handle_analysis():
     if not all([GEMINI_API_KEY, credentials, GCP_PROJECT_ID, GCS_BUCKET_NAME, BIGQUERY_DATASET, BIGQUERY_TABLE]):
         return jsonify({"error": "Server-side configuration is incomplete. Check Vercel environment variables."}), 500
@@ -111,11 +111,11 @@ When generating '### Key Clauses & Legal Connections', cite the specific section
         response = gemini_model.generate_content(initial_prompt)
         return jsonify({"analysis": response.text, "documentText": document_text})
     except Exception as e:
-        print(f"Error in /analyze: {e}")
+        print(f"Error in /api/analyze: {e}")
         return jsonify({"error": str(e)}), 500
 
-# --- ✅ FIX: Remove '/api' prefix from the Flask route ---
-@app.route('/chat', methods=['POST'])
+# ✅ FIXED: Added '/api' prefix to match frontend expectations
+@app.route('/api/chat', methods=['POST'])
 def handle_chat():
     try:
         data = request.get_json()
@@ -129,6 +129,5 @@ def handle_chat():
         response = chat.send_message(prompt)
         return jsonify({"response": response.text})
     except Exception as e:
-        print(f"Error in /chat: {e}")
+        print(f"Error in /api/chat: {e}")
         return jsonify({"error": str(e)}), 500
-
