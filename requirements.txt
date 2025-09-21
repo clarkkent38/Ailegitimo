@@ -1,0 +1,10 @@
+Flask
+Flask-Cors
+google-generativeai
+google-cloud-vision
+google-cloud-storage
+google-cloud-bigquery
+google-auth
+PyPDF2
+python-docx
+werkzeug
