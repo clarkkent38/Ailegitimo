@@ -3,32 +3,17 @@
   "builds": [
     {
       "src": "app/app.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "50mb"
-      }
-    },
-    {
-      "src": "public/**/*",
-      "use": "@vercel/static"
+      "use": "@vercel/python"
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
+      "src": "/(analyze|chat|health)",
       "dest": "app/app.py"
     },
     {
       "src": "/(.*)",
       "dest": "public/$1"
     }
-  ],
-  "functions": {
-    "app/app.py": {
-      "maxDuration": 30
-    }
-  },
-  "env": {
-    "PYTHONPATH": "app"
-  }
+  ]
 }
