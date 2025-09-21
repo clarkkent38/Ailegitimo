@@ -1,5 +1,5 @@
 import os
-import io 
+import io
 import json
 import google.generativeai as genai
 from flask import Flask, request, jsonify
