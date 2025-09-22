@@ -9,11 +9,13 @@ CORS(app)
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
-@app.route('/', defaults={'path': ''}, methods=['POST'])
-@app.route('/<path:path>', methods=['POST'])
-def handler(path=''):
+@app.route('/', methods=['POST', 'GET'])
+def chat():
     """Chat endpoint handler"""
     print("💬 /api/chat endpoint called")
+    
+    if request.method == 'GET':
+        return jsonify({"message": "Chat endpoint is working. Send POST request with history."})
     
     if not GEMINI_API_KEY:
         return jsonify({"error": "GEMINI_API_KEY not configured"}), 500
@@ -45,6 +47,8 @@ def handler(path=''):
         print(f"❌ Error in /api/chat: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-# For Vercel
-def lambda_handler(event, context):
-    return app(event, context)
+# Handler for Vercel
+def handler(event, context):
+    """Handler for Vercel serverless deployment"""
+    with app.app_context():
+        return app.full_dispatch_request()
