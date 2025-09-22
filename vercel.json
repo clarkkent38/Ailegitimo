@@ -1,25 +1,17 @@
 {
   "functions": {
-    "app/app.py": {
+    "api/*.py": {
       "runtime": "python3.9"
     }
   },
   "routes": [
     {
-      "source": "/analyze",
-      "destination": "app/app.py"
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
     },
     {
-      "source": "/chat",
-      "destination": "app/app.py"
-    },
-    {
-      "source": "/health",
-      "destination": "app/app.py"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "public/index.html"
+      "src": "/(.*)",
+      "dest": "/public/$1"
     }
   ]
 }
