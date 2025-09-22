@@ -140,8 +140,8 @@ def log_to_bigquery(metadata):
         print(f"⚠️ BigQuery logging failed: {e}")
         return False
 
-@app.route('/api/analyze', methods=['POST'])
-def analyze():
+@app.route('/analyze', methods=['POST']) # Corrected Route
+def analyze_endpoint():
     """Main analyze endpoint handler"""
     print("🚀 /api/analyze endpoint called")
 
@@ -221,8 +221,8 @@ When generating the '### Key Clauses & Legal Connections' section, you MUST refe
         print(f"❌ Error in /api/analyze: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/chat', methods=['POST'])
-def chat():
+@app.route('/chat', methods=['POST']) # Corrected Route
+def chat_endpoint():
     """Chat endpoint handler"""
     print("💬 /api/chat endpoint called")
 
@@ -256,15 +256,11 @@ def chat():
         print(f"❌ Error in /api/chat: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/health', methods=['GET'])
-def health():
+@app.route('/health', methods=['GET']) # Corrected Route
+def health_endpoint():
     return jsonify({
         "status": "healthy",
         "message": "Flask app is running",
         "gemini_configured": bool(GEMINI_API_KEY),
         "gcp_configured": bool(GCP_CREDENTIALS_JSON)
     })
-
-# Vercel handler
-def handler(request):
-    return app(request.environ, lambda start_response: start_response)
