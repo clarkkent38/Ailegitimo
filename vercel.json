@@ -1,12 +1,17 @@
 {
+  "functions": {
+    "api/*.py": {
+      "runtime": "@vercel/python@3.9.16"
+    }
+  },
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/analyze.py"
+      "dest": "/api/$1"
     },
     {
       "src": "/(.*)",
-      "dest": "/public/index.html"
+      "dest": "/public/$1"
     }
   ]
 }
