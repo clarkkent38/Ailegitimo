@@ -11,7 +11,10 @@ import docx
 import datetime
 import uuid
 
-# --- Environment Variables ---
+app = Flask(__name__)
+CORS(app)
+
+# --- Environment Variables (Set these in Vercel Dashboard) ---
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID") 
 GCS_BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME")
@@ -28,7 +31,7 @@ if GCP_CREDENTIALS_JSON:
     except Exception as e:
         print(f"⚠️ GCP Credentials error: {e}")
 
-# --- Embedded Knowledge Base ---
+# --- Embedded Knowledge Base (instead of file reading) ---
 LEGAL_KNOWLEDGE_BASE = """
 --- BHARATIYA NYAYA SANHITA (BNS) SUMMARY ---
 Key sections include:
@@ -137,59 +140,26 @@ def log_to_bigquery(metadata):
         print(f"⚠️ BigQuery logging failed: {e}")
         return False
 
-# Main handler function for Vercel
-def handler(request):
-    """Main analyze endpoint handler for Vercel"""
+@app.route('/', methods=['POST', 'GET'])
+def analyze():
+    """Main analyze endpoint handler"""
     print("🚀 /api/analyze endpoint called")
     
-    # Handle CORS
-    if request.method == 'OPTIONS':
-        return {
-            'statusCode': 200,
-            'headers': {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type',
-            },
-            'body': ''
-        }
+    if request.method == 'GET':
+        return jsonify({"message": "Analyze endpoint is working. Send POST request with file."})
     
     if not GEMINI_API_KEY:
-        return {
-            'statusCode': 500,
-            'headers': {'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({"error": "GEMINI_API_KEY not configured"})
-        }
+        return jsonify({"error": "GEMINI_API_KEY not configured"}), 500
 
-    if request.method != 'POST':
-        return {
-            'statusCode': 405,
-            'headers': {'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({"error": "Method not allowed"})
-        }
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part in request"}), 400
+        
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No file selected"}), 400
 
     try:
-        # For Vercel, we need to parse the multipart form data differently
-        # This is a simplified approach - you might need to use a proper multipart parser
-        files = request.files if hasattr(request, 'files') else {}
-        form = request.form if hasattr(request, 'form') else {}
-        
-        if 'file' not in files:
-            return {
-                'statusCode': 400,
-                'headers': {'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({"error": "No file part in request"})
-            }
-            
-        file = files['file']
-        if file.filename == '':
-            return {
-                'statusCode': 400,
-                'headers': {'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({"error": "No file selected"})
-            }
-
-        language = form.get('language', 'English')
+        language = request.form.get('language', 'English')
         print(f"📄 Processing: {file.filename}, Language: {language}")
         
         # Read file into memory
@@ -200,11 +170,7 @@ def handler(request):
         document_text = extract_text_from_file_in_memory(file, file.filename)
         
         if not document_text.strip():
-            return {
-                'statusCode': 400,
-                'headers': {'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({"error": "No text could be extracted from the file"})
-            }
+            return jsonify({"error": "No text could be extracted from the file"}), 400
         
         print(f"✅ Text extraction successful: {len(document_text)} characters")
         
@@ -247,21 +213,19 @@ When generating the '### Key Clauses & Legal Connections' section, you MUST refe
             }
             log_to_bigquery(metadata)
         
-        return {
-            'statusCode': 200,
-            'headers': {'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({
-                "analysis": response.text,
-                "documentText": document_text,
-                "documentId": document_id,
-                "status": "success"
-            })
-        }
+        return jsonify({
+            "analysis": response.text,
+            "documentText": document_text,
+            "documentId": document_id,
+            "status": "success"
+        })
         
     except Exception as e:
         print(f"❌ Error in /api/analyze: {str(e)}")
-        return {
-            'statusCode': 500,
-            'headers': {'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({"error": str(e)})
-        }
+        return jsonify({"error": str(e)}), 500
+
+# This is the handler that Vercel will call
+def handler(event, context):
+    """Handler for Vercel serverless deployment"""
+    with app.app_context():
+        return app.full_dispatch_request()
